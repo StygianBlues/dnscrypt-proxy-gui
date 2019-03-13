@@ -1,6 +1,27 @@
 cmake_minimum_required(VERSION 3.0)
 set (CMAKE_INSTALL_PREFIX /usr)
 
+########
+# Find systemd service dir
+
+pkg_check_modules(SYSTEMD "systemd")
+if (SYSTEMD_FOUND AND "${SYSTEMD_SERVICES_INSTALL_DIR}" STREQUAL "")
+	execute_process(COMMAND ${PKG_CONFIG_EXECUTABLE}
+		--variable=systemdsystemunitdir systemd
+		OUTPUT_VARIABLE SYSTEMD_SERVICES_INSTALL_DIR)
+	string(REGEX REPLACE "[ \t\n]+" "" SYSTEMD_SERVICES_INSTALL_DIR
+		"${SYSTEMD_SERVICES_INSTALL_DIR}")
+elseif (NOT SYSTEMD_FOUND AND SYSTEMD_SERVICES_INSTALL_DIR)
+	message (FATAL_ERROR "Variable SYSTEMD_SERVICES_INSTALL_DIR is\
+		defined, but we can't find systemd using pkg-config")
+endif()
+
+if (SYSTEMD_FOUND)
+	set(WITH_SYSTEMD "ON")
+	message(STATUS "systemd services install dir: ${SYSTEMD_SERVICES_INSTALL_DIR}")
+else()
+	set(WITH_SYSTEMD "OFF")
+endif (SYSTEMD_FOUND)
 
 project (dnscrypt-proxy-gui)
 set (APP_NAME DNSCryptClient)
@@ -15,13 +36,13 @@ endif()
 add_subdirectory(src)
 
 install ( FILES       ${APP_NAME}.desktop
-          DESTINATION ${SHARE_INSTALL_PREFIX}/applications )
+          DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications )
 install ( FILES       ${APP_NAME}@.service
-          DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system )
+          DESTINATION ${SYSTEMD_SERVICES_INSTALL_DIR} )
 install ( FILES       ${APP_NAME}_test@.service
-          DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system )
+          DESTINATION ${SYSTEMD_SERVICES_INSTALL_DIR} )
 install ( FILES       ${APP_NAME}_test_v2.service
-          DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system )
+          DESTINATION ${SYSTEMD_SERVICES_INSTALL_DIR} )
 install ( FILES src/icons/64x64/status/${APP_NAME}.png
-          DESTINATION ${SHARE_INSTALL_PREFIX}/icons/hicolor/64x64/apps
+          DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/64x64/apps
           RENAME ${APP_NAME}.png )
