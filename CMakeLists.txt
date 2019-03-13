@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 set (CMAKE_INSTALL_PREFIX /usr)
 
-########
-# Find systemd service dir
+# require Pkg-Config
+FIND_PACKAGE(PkgConfig REQUIRED)
 
+# Find systemd service directory
 pkg_check_modules(SYSTEMD "systemd")
 if (SYSTEMD_FOUND AND "${SYSTEMD_SERVICES_INSTALL_DIR}" STREQUAL "")
 	execute_process(COMMAND ${PKG_CONFIG_EXECUTABLE}
